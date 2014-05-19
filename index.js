@@ -25,7 +25,6 @@ prompt.get([{
 });
 
 function fixIt(path, percent, cb) {
-    debugger;
     var find  = finder(path);
     var queue = [];
 
