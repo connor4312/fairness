@@ -25,26 +25,34 @@ prompt.get([{
 });
 
 function fixIt(path, percent, cb) {
-    var find  = finder(path);
-    var queue = [];
+    var find  = finder(path),
+        done  = false;
 
-    find.on('file', function (file) {
-        queue.push(function (callback) {
-            console.log('Fixing ' + file);
+    var queue = async.queue(function (file, callback) {
+        console.log('Fixing ' + file);
 
-            var out = '';
-            reader.eachLine(file, function (line, last) {
-                if (Math.random() > percent) {
-                    out += line + "\n";
-                }
-            }).then(function () {
-                fs.writeFileSync(file, out);
-                callback();
-            });
+        var out = '';
+        reader.eachLine(file, function (line, last) {
+            if (Math.random() > percent) {
+                out += line + "\n";
+            }
+        }).then(function () {
+            fs.writeFileSync(file, out);
+            callback();
         });
     });
 
+    queue.drain = function () {
+        if (done) {
+            console.log('Done!');
+        }
+    }
+
+    find.on('file', function (file) {
+        queue.push(file);
+    });
+
     find.on('end', function () {
-        async.parallelLimit(queue, 2, cb);
+        done = true;
     });
 }
